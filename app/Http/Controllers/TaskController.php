@@ -14,7 +14,9 @@ class TaskController extends Controller
      */
     public function index()
     {
-        return Task::all();
+        $tasks = Task::all();
+
+        return view('tasks.index', ['tasks' => $tasks]);
     }
 
     /**
@@ -25,17 +27,13 @@ class TaskController extends Controller
         DB::beginTransaction();
 
         try {
-            $task = Task::create($request->validated());
-            return response()->json(
-                ['message' => 'Task created successfully'],
-                201,
-                ['Location' => route('task.show', ['id' => $task->id])]
-            );
+            Task::create($request->validated());
         } catch (\Exception $ex) {
             DB::rollBack();
-            return response()->json(['message' => 'Task creation failed', 'error' => $ex->getMessage()], 500);
+            return back(500)->withErrors(['message' => 'Task creation failed']);
         } finally {
             DB::commit();
+            return route('task.index', ['message' => 'Task created successfully']);
         }
     }
 
