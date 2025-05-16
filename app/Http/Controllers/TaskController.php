@@ -19,6 +19,11 @@ class TaskController extends Controller
         return view('tasks.index', ['tasks' => $tasks]);
     }
 
+    public function create()
+    {
+        return view('tasks.create');
+    }
+
     /**
      * Store a newly created resource in storage.
      */
@@ -33,7 +38,8 @@ class TaskController extends Controller
             return back(500)->withErrors(['message' => 'Task creation failed']);
         } finally {
             DB::commit();
-            return route('task.index', ['message' => 'Task created successfully']);
+            session()->flash('message', 'Task created successfully');
+            return redirect(route('tasks.index'));
         }
     }
 
@@ -80,6 +86,7 @@ class TaskController extends Controller
 
         $task->delete();
 
-        return response()->json(['message' => 'Task deleted successfully']);
+        session()->flash('message', 'Task deleted successfully');
+        return redirect()->route('tasks.index');
     }
 }

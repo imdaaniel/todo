@@ -26,7 +26,7 @@
             <tbody>
                 @foreach ($tasks as $task)
                     <tr>
-                        <td>{{ $loop->iteration }}</td>
+                        <td>{{ (string) $task->id }}</td>
                         <td>{{ $task->title }}</td>
                         <td>{{ $task->description }}</td>
                         <td>{{ $task->is_completed ? 'Completed' : 'Pending' }}</td>
