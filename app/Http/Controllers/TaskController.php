@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ChangeStatusTaskRequest;
 use App\Http\Requests\StoreTaskRequest;
+use App\Http\Requests\UpdateTaskRequest;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +16,7 @@ class TaskController extends Controller
      */
     public function index()
     {
-        $tasks = Task::all();
+        $tasks = Task::all()->sortByDesc('created_at');;
 
         return view('tasks.index', ['tasks' => $tasks]);
     }
@@ -35,42 +37,52 @@ class TaskController extends Controller
             Task::create($request->validated());
         } catch (\Exception $ex) {
             DB::rollBack();
-            return back(500)->withErrors(['message' => 'Task creation failed']);
+            return redirect()->route('tasks.index')->withErrors(['error' => 'Task creation failed']);
         } finally {
             DB::commit();
-            session()->flash('message', 'Task created successfully');
-            return redirect(route('tasks.index'));
+            return redirect()->route('tasks.index')->with('message', 'Task created successfully');
         }
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function edit(string $id)
     {
         $task = Task::find($id);
 
         if (!$task) {
-            return response()->json(['message' => 'Task not found'], 404);
+            return redirect()->route('tasks.index')->withErrors(['error' => 'Task not found']);
         }
 
-        return $task;
+        return view('tasks.edit', ['task' => $task]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(StoreTaskRequest $request, string $id)
+    public function update(UpdateTaskRequest $request, string $id)
     {
         $task = Task::find($id);
 
         if (!$task) {
-            return response()->json(['message' => 'Task not found'], 404);
+            return redirect()->route('tasks.index')->withErrors(['error' => 'Task not found']);
         }
 
         $task->update($request->validated());
 
-        return $task;
+        return redirect()->route('tasks.index')->with('message', 'Task updated successfully');
+    }
+
+    public function changeStatus(ChangeStatusTaskRequest $request, string $id)
+    {
+        $task = Task::find($id);
+
+        if (!$task) {
+            return redirect()->route('tasks.index')->withErrors(['error' => 'Task not found']);
+        }
+
+        $task->is_completed = $request->has('is_completed');
+        $task->update();
+
+        return redirect()->route('tasks.index')->with('message', 'Task updated successfully');
     }
 
     /**
@@ -86,7 +98,6 @@ class TaskController extends Controller
 
         $task->delete();
 
-        session()->flash('message', 'Task deleted successfully');
-        return redirect()->route('tasks.index');
+        return redirect()->route('tasks.index')->with('message', 'Task deleted successfully');
     }
 }
